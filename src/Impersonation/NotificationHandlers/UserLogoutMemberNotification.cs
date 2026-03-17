@@ -4,15 +4,15 @@ using Umbraco.Cms.Web.Common.Security;
 
 namespace Impersonation.NotificationHandlers;
 
-public class UserLogoutMemberNotification : INotificationHandler<UserLogoutSuccessNotification>
+public class UserLogoutMemberNotification : INotificationAsyncHandler<UserLogoutSuccessNotification>
 {
     private readonly IMemberSignInManager _memberSignInManager;
 
     public UserLogoutMemberNotification(IMemberSignInManager memberSignInManager) =>
         _memberSignInManager = memberSignInManager;
 
-    public void Handle(UserLogoutSuccessNotification notification)
+    public async Task HandleAsync(UserLogoutSuccessNotification notification, CancellationToken cancellationToken)
     {
-        _memberSignInManager.SignOutAsync();
+        await _memberSignInManager.SignOutAsync();
     }
 }

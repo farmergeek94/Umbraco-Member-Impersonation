@@ -15,6 +15,6 @@ public class ImpersonationComposer : IComposer
     {
         builder.Services.AddScoped<IImpersonationMemberSignInManager, ImpersonationMemberSignInManager>();
         builder.Services.AddScoped<IBackofficeUserAccessor, BackofficeUserAccessor>();
-        builder.AddNotificationHandler<UserLogoutSuccessNotification, UserLogoutMemberNotification>();
+        builder.AddNotificationAsyncHandler<UserLogoutSuccessNotification, UserLogoutMemberNotification>();
     }
 }
