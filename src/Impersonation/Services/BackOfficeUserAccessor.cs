@@ -3,30 +3,23 @@ using Impersonation.Interfaces.Accessors;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
+using Umbraco.Cms.Core.Models.Membership;
+using Umbraco.Cms.Core.Services;
 using Umbraco.Extensions;
 
 namespace Impersonation.Services;
 
-public class BackofficeUserAccessor : IBackofficeUserAccessor
+public class BackofficeUserAccessor(
+    IOptionsSnapshot<CookieAuthenticationOptions> cookieOptionsSnapshot,
+    IHttpContextAccessor httpContextAccessor,
+    IUserService userService
+    ) : IBackofficeUserAccessor
 {
-    private readonly IOptionsSnapshot<CookieAuthenticationOptions> _cookieOptionsSnapshot;
-    private readonly IHttpContextAccessor _httpContextAccessor;
-
-    public BackofficeUserAccessor(
-        IOptionsSnapshot<CookieAuthenticationOptions> cookieOptionsSnapshot,
-        IHttpContextAccessor httpContextAccessor
-    )
-    {
-        _cookieOptionsSnapshot = cookieOptionsSnapshot;
-        _httpContextAccessor = httpContextAccessor;
-    }
-
-
     public ClaimsIdentity? BackofficeUser
     {
         get
         {
-            var httpContext = _httpContextAccessor.HttpContext;
+            var httpContext = httpContextAccessor.HttpContext;
 
             if (httpContext == null)
             {
@@ -35,7 +28,7 @@ public class BackofficeUserAccessor : IBackofficeUserAccessor
 
 
             var cookieOptions =
-                _cookieOptionsSnapshot.Get(Umbraco.Cms.Core.Constants.Security.BackOfficeAuthenticationType);
+                cookieOptionsSnapshot.Get(Umbraco.Cms.Core.Constants.Security.BackOfficeAuthenticationType);
             var backOfficeCookie = httpContext.Request.Cookies[cookieOptions.Cookie.Name!];
 
             if (string.IsNullOrEmpty(backOfficeCookie))
@@ -48,5 +41,25 @@ public class BackofficeUserAccessor : IBackofficeUserAccessor
 
             return backOfficeIdentity;
         }
+    }
+
+     public async Task<IUser?> GetUmbracoUser()
+    {
+        Guid? currentUserKey = BackofficeUser?.GetUserKey();
+
+        if (currentUserKey is null)
+        {
+            var currentUserId = BackofficeUser?.GetUserId<int>();
+            if (currentUserId.HasValue)
+            {
+                return userService.GetUserById(currentUserId.Value);
+            }
+        }
+        else
+        {
+            return userService.GetAsync(currentUserKey.Value).GetAwaiter().GetResult();
+        }
+
+        return null;
     }
 }

@@ -1,4 +1,4 @@
-import { customElement, state } from "lit/decorators.js";
+import { customElement, state, property } from "lit/decorators.js";
 import { UUIModalElement } from "@umbraco-ui/uui";
 import { css, html } from "lit";
 import { MemberOrderByModel, UserAuthToken } from "./types";
@@ -91,6 +91,9 @@ export class UmbActModal extends UUIModalElement {
     take: 20,
   };
 
+  @property({ type: Boolean })
+  impersonating = false;
+
   items: MemberItemResponseModel[] = [];
 
   latestItems: MemberItemResponseModel[] = [];
@@ -108,14 +111,19 @@ export class UmbActModal extends UUIModalElement {
 
   render() {
     return html`
-      <uui-modal-container>
+      <uui-modal-container @click="${(event: MouseEvent) => {
+        if ((event.target as HTMLElement).closest("uui-dialog") === null) {
+          this.close();
+        }
+      }}">
+
         <uui-modal-dialog>
           <uui-dialog>
             <div>
               <div>
                 <uui-input type="search" pristine="" label="Label" placeholder="Type to search..." .onInput="${this.onInputChange}">
                   <uui-icon-registry-essential class="umb-impersonation-search-icon" slot="prepend">
-                    <uui-icon name="search" />
+                    <uui-icon name="search"></uui-icon>
                   </uui-icon-registry-essential>
                 </uui-input>
               </div>
@@ -187,13 +195,15 @@ export class UmbActModal extends UUIModalElement {
               <uui-scroll-container>
                 ${this.items.map(
                   (item) => html` <umb-act-member-item-actions .item=${item}>
-                    <umb-act-search-result-item .item="${item}" />
+                    <umb-act-search-result-item .item="${item}"></umb-act-search-result-item>
                   </umb-act-member-item-actions>`
                 )}
               </uui-scroll-container>
+              ${this.impersonating ? html`
               <div>
                 <uui-button @click="${this.stopImpersonating}" class="umb-act-logout" label="impersonate" look="primary" color="danger"> Stop impersonating </uui-button>
               </div>
+              ` : ""}
             </div>
           </uui-dialog>
         </uui-modal-dialog>
@@ -222,7 +232,7 @@ export class UmbActModal extends UUIModalElement {
     });
 
     if (!response.ok) {
-      console.error("There was a problem with the fetch operation:", await response.text());
+      console.error("There was a problem with the fetch operation:", response.statusText);
     } else {
       this.items = data.items;
       this.requestUpdate("items");

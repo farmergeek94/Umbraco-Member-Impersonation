@@ -1,13 +1,31 @@
 @using Impersonation.Interfaces.Accessors
+@using System.Security.Claims
+@using Umbraco.Cms.Core.Models
 @using Umbraco.Cms.Core.Security
+@using Umbraco.Cms.Core
+@using Umbraco.Extensions
 @inject IBackofficeUserAccessor BackOfficeSecurity
 @inject IMemberManager MemberManager
 
 
+
 @{
     var member = await MemberManager.GetCurrentMemberAsync();
-    if (BackOfficeSecurity.BackofficeUser == null ||
-        BackOfficeSecurity.BackofficeUser.IsAuthenticated == false)
+
+    // If there is no authenticated backoffice user, we should not show the impersonation UI at all
+    ClaimsIdentity? user = BackOfficeSecurity.BackofficeUser;
+    if (user == null ||
+        user.IsAuthenticated == false)
+    {
+        return;
+    }
+
+    // Check if the user has access to the members section and sensitive data before showing the impersonation UI
+    // Run after the authenticated check to avoid unnecessary database calls for unauthenticated users
+    var umbracoUser = await BackOfficeSecurity.GetUmbracoUser();
+    if (umbracoUser == null
+    || !umbracoUser.HasSectionAccess(Constants.Applications.Members)
+    || !umbracoUser.HasAccessToSensitiveData())
     {
         return;
     }

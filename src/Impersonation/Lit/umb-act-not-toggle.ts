@@ -20,7 +20,7 @@ export class UmbActNotToggle extends LitElement {
     const modalRef = createRef<UmbActModal>();
 
     this._modals.push(html`
-      <umb-act-modal ref=${modalRef}/>
+      <umb-act-modal .ref=${modalRef} .impersonating=${false}></umb-act-modal>
     `);
 
     this.requestUpdate('_modals');
