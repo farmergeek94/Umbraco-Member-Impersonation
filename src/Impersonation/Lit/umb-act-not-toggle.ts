@@ -7,7 +7,7 @@ import {UmbActModal} from "./umb-act-modal";
 export class UmbActNotToggle extends LitElement {
   static styles = css`
     :host {
-      position: absolute;
+      position: fixed;
       bottom: 1.00rem;
       left: 1.00rem;
     }
